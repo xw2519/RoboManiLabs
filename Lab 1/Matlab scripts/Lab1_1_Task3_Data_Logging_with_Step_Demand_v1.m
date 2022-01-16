@@ -54,6 +54,11 @@ ESC_CHARACTER               = 'e';          % Key for escaping loop
 COMM_SUCCESS                = 0;            % Communication Success result value
 COMM_TX_FAIL                = -1001;        % Communication Tx Failed
 
+% Plotting variables
+CURRENT_PLOT                = [];
+X_AXIS_COUNTER              = 0;
+
+
 %% ------------------ %%
 
 % Initialize PortHandler Structs
@@ -123,21 +128,48 @@ while 1
     elseif getLastRxPacketError(port_num, PROTOCOL_VERSION) ~= 0
         printRxPacketError(PROTOCOL_VERSION, getLastRxPacketError(port_num, PROTOCOL_VERSION));
     end
-
+    
+    % Read present position
     while 1
-        % Read present position
         dxl_present_position = read4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID, ADDR_PRO_PRESENT_POSITION);
         if getLastTxRxResult(port_num, PROTOCOL_VERSION) ~= COMM_SUCCESS
             printTxRxResult(PROTOCOL_VERSION, getLastTxRxResult(port_num, PROTOCOL_VERSION));
         elseif getLastRxPacketError(port_num, PROTOCOL_VERSION) ~= 0
             printRxPacketError(PROTOCOL_VERSION, getLastRxPacketError(port_num, PROTOCOL_VERSION));
         end
+        
+        % Plot the data on the graph
+        current_plot = [X_AXIS_COUNTER, dxl_present_position];
+        CURRENT_PLOT = cat(1, CURRENT_PLOT, current_plot); % Concatenate the array
 
+        % get min and max values of points so far
+        minVals = min(XY, [], 1);
+        maxVals = max(XY, [], 1);
+
+        % plot the data point
+        scatter(xy(1), xy(2), 'b*');
+
+        if size(XY) ~= 1
+            line([current_plot(1), CURRENT_PLOT(end-1, 1)], [current_plot(2), CURRENT_PLOT(end-1, 2)], 'Color', 'b');
+        end
+
+        hold on;
+
+        % update the axis limits dynamically
+        set(ax, {'XLim', 'YLim'}, {[minVals(1)-1 maxVals(1)+1], [minVals(2)-1 maxVals(2)+1]});
+        
+        % pause so plot can update
+        pause(0.5);
+        
+        % Print logging out
         fprintf('[ID:%03d] GoalPos:%03d  PresPos:%03d\n', DXL_ID, dxl_goal_position(index), typecast(uint32(dxl_present_position), 'int32'));
-
+        
+        % Check if the current servo position meets the goal position
         if ~(abs(dxl_goal_position(index) - typecast(uint32(dxl_present_position), 'int32')) > DXL_MOVING_STATUS_THRESHOLD)
             break;
         end
+        
+        X_AXIS_COUNTER = X_AXIS_COUNTER + 1;
     end
 
     % Change goal position
