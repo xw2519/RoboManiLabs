@@ -58,6 +58,11 @@ COMM_TX_FAIL                = -1001;        % Communication Tx Failed
 CURRENT_PLOT                = [];
 X_AXIS_COUNTER              = 0;
 
+% Sine wave generation
+% linspace: https://uk.mathworks.com/help/matlab/ref/linspace.html
+SINE_X_AXIS                 = linspace(0,2*pi,1000);
+SINE_Y_VALUES               = sine(SINE_X_AXIS);
+SINE_Y_DYNAMIXEL_FORMAT     = (1/0.088) * sin(SINE_X_AXIS) * 90;
 
 %% ------------------ %%
 
@@ -115,14 +120,17 @@ else
     fprintf('Dynamixel has been successfully connected \n');
 end
 
-% Keep looping
-% Constantly alternate between 0deg and 180deg
-while 1
-    if input('Press any key to continue! (or input e to quit!)\n', 's') == ESC_CHARACTER
-        break;
-    end
+% Set servo to default position: 0deg
+write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID, ADDR_PRO_GOAL_POSITION, typecast(int32(0), 'uint32'));
 
-    % Write goal position
+% Set servo to default sine wave position: 90deg
+write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID, ADDR_PRO_GOAL_POSITION, typecast(int32(1022.7273), 'uint32'));
+
+% Keep looping
+% Constantly update goal position to track sine wave
+% Loops for an entire sine wave
+for loop_counter = 1:length(SINE_X_AXIS)
+    % Write goal position to new sine wave position
     write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID, ADDR_PRO_GOAL_POSITION, typecast(int32(dxl_goal_position(index)), 'uint32'));
     if getLastTxRxResult(port_num, PROTOCOL_VERSION) ~= COMM_SUCCESS
         printTxRxResult(PROTOCOL_VERSION, getLastTxRxResult(port_num, PROTOCOL_VERSION));
@@ -130,7 +138,7 @@ while 1
         printRxPacketError(PROTOCOL_VERSION, getLastRxPacketError(port_num, PROTOCOL_VERSION));
     end
     
-    % Read present position
+    % Read present position until the servo reaches the desired position
     while 1
         dxl_present_position = read4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID, ADDR_PRO_PRESENT_POSITION);
         if getLastTxRxResult(port_num, PROTOCOL_VERSION) ~= COMM_SUCCESS
@@ -174,7 +182,7 @@ while 1
     end
 
     % Change goal position
-    % Alternate between 0deg and 180deg
+    % Calculate new sine wave position
     if index == 1
         index = 2;
     else

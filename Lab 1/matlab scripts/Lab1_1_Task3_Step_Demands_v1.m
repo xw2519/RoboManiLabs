@@ -67,7 +67,11 @@ packetHandler();
 
 index = 1;
 dxl_comm_result = COMM_TX_FAIL;           % Communication result
-dxl_goal_position = [DXL_MINIMUM_POSITION_VALUE DXL_MAXIMUM_POSITION_VALUE];         % Goal position
+
+% Goal position: Modified to go between 0deg and 180deg
+% 0.088 [deg/pulse] 	1[rev] : 0 ~ 4,095
+% Based on: https://emanual.robotis.com/docs/en/dxl/x/xm430-w350/#goal-position
+dxl_goal_position = [0 2045];         
 
 dxl_error = 0;                              % Dynamixel error
 dxl_present_position = 0;                   % Present position
