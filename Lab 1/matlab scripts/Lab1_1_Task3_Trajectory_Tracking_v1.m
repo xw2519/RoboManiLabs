@@ -61,7 +61,7 @@ X_AXIS_COUNTER              = 0;
 % Sine wave generation
 % linspace: https://uk.mathworks.com/help/matlab/ref/linspace.html
 SINE_X_AXIS                 = linspace(0,2*pi,1000);
-SINE_Y_VALUES               = sine(SINE_X_AXIS);
+SINE_Y_VALUES               = sin(SINE_X_AXIS);
 SINE_Y_DYNAMIXEL_FORMAT     = (1/0.088) * sin(SINE_X_AXIS) * 90;
 
 %% ------------------ %%
@@ -75,11 +75,11 @@ port_num = portHandler(DEVICENAME);
 packetHandler();
 
 index = 1;
-dxl_comm_result = COMM_TX_FAIL;           % Communication result
-dxl_goal_position = [DXL_MINIMUM_POSITION_VALUE DXL_MAXIMUM_POSITION_VALUE];         % Goal position
+dxl_comm_result = COMM_TX_FAIL;               % Communication result
+dxl_goal_position = SINE_Y_DYNAMIXEL_FORMAT;  % Goal position
 
-dxl_error = 0;                              % Dynamixel error
-dxl_present_position = 0;                   % Present position
+dxl_error = 0;                                % Dynamixel error
+dxl_present_position = 0;                     % Present position
 
 
 % Open port
@@ -129,9 +129,9 @@ write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID, ADDR_PRO_GOAL_POSITION, typec
 % Keep looping
 % Constantly update goal position to track sine wave
 % Loops for an entire sine wave
-for loop_counter = 1:length(SINE_X_AXIS)
+for loop_counter = dxl_goal_position
     % Write goal position to new sine wave position
-    write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID, ADDR_PRO_GOAL_POSITION, typecast(int32(dxl_goal_position(index)), 'uint32'));
+    write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID, ADDR_PRO_GOAL_POSITION, typecast(int32(loop_counter), 'uint32'));
     if getLastTxRxResult(port_num, PROTOCOL_VERSION) ~= COMM_SUCCESS
         printTxRxResult(PROTOCOL_VERSION, getLastTxRxResult(port_num, PROTOCOL_VERSION));
     elseif getLastRxPacketError(port_num, PROTOCOL_VERSION) ~= 0
@@ -179,14 +179,6 @@ for loop_counter = 1:length(SINE_X_AXIS)
         end
         
         X_AXIS_COUNTER = X_AXIS_COUNTER + 1;
-    end
-
-    % Change goal position
-    % Calculate new sine wave position
-    if index == 1
-        index = 2;
-    else
-        index = 1;
     end
 end
 
