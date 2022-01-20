@@ -38,9 +38,9 @@ ADDR_PRO_OPERATING_MODE      = 11; % Sets between Current, Velocity, Position Co
 PROTOCOL_VERSION            = 2.0;          % See which protocol version is used in the Dynamixel
 
 % Default setting
-DXL_ID                      = 13;            % Dynamixel ID: 1
+DXL_ID                      = 14;            % Dynamixel ID: 1
 BAUDRATE                    = 1000000;
-DEVICENAME                  = 'COM12';       % Check which port is being used on your controller
+DEVICENAME                  = 'COM6';       % Check which port is being used on your controller
                                             % ex) Windows: 'COM1'   Linux: '/dev/ttyUSB0' Mac: '/dev/tty.usbserial-*'
                                             
 TORQUE_ENABLE               = 1;            % Value for enabling the torque
@@ -57,7 +57,6 @@ COMM_TX_FAIL                = -1001;        % Communication Tx Failed
 % Plotting variables
 CURRENT_PLOT                = [];
 X_AXIS_COUNTER              = 0;
-
 
 %% ------------------ %%
 
@@ -104,6 +103,11 @@ write1ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID, ADDR_PRO_OPERATING_MODE, 3);
 % Enable Dynamixel Torque
 write1ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID, ADDR_PRO_TORQUE_ENABLE, TORQUE_ENABLE);
 
+% Goal position: Modified to go between 0deg and 180deg
+% 0.088 [deg/pulse] 	1[rev] : 0 ~ 4,095
+% Based on: https://emanual.robotis.com/docs/en/dxl/x/xm430-w350/#goal-position
+dxl_goal_position = [0 2045];   
+
 dxl_comm_result = getLastTxRxResult(port_num, PROTOCOL_VERSION);
 dxl_error = getLastRxPacketError(port_num, PROTOCOL_VERSION);
 
@@ -115,12 +119,13 @@ else
     fprintf('Dynamixel has been successfully connected \n');
 end
 
+h = figure;
+
+ax = gca(h);
+        
 % Keep looping
 % Constantly alternate between 0deg and 180deg
 while 1
-    if input('Press any key to continue! (or input e to quit!)\n', 's') == ESC_CHARACTER
-        break;
-    end
 
     % Write goal position
     write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID, ADDR_PRO_GOAL_POSITION, typecast(int32(dxl_goal_position(index)), 'uint32'));
@@ -129,6 +134,10 @@ while 1
     elseif getLastRxPacketError(port_num, PROTOCOL_VERSION) ~= 0
         printRxPacketError(PROTOCOL_VERSION, getLastRxPacketError(port_num, PROTOCOL_VERSION));
     end
+    
+    pause(2)
+    
+    X_AXIS_COUNTER = X_AXIS_COUNTER + 1;
     
     % Read present position
     while 1
@@ -140,17 +149,22 @@ while 1
         end
         
         % Plot the data on the graph
+        
+        
         current_plot = [X_AXIS_COUNTER, dxl_present_position];
+        
+        disp(current_plot)
+        
         CURRENT_PLOT = cat(1, CURRENT_PLOT, current_plot); % Concatenate the array
 
         % get min and max values of points so far
-        minVals = min(XY, [], 1);
-        maxVals = max(XY, [], 1);
+        minVals = min(CURRENT_PLOT, [], 1);
+        maxVals = max(CURRENT_PLOT, [], 1);
 
         % plot the data point
-        scatter(xy(1), xy(2), 'b*');
+        scatter(current_plot(1), current_plot(2), 'b*');
 
-        if size(XY) ~= 1
+        if size(CURRENT_PLOT) ~= 1
             line([current_plot(1), CURRENT_PLOT(end-1, 1)], [current_plot(2), CURRENT_PLOT(end-1, 2)], 'Color', 'b');
         end
 
@@ -169,8 +183,6 @@ while 1
         if ~(abs(dxl_goal_position(index) - typecast(uint32(dxl_present_position), 'int32')) > DXL_MOVING_STATUS_THRESHOLD)
             break;
         end
-        
-        X_AXIS_COUNTER = X_AXIS_COUNTER + 1;
     end
 
     % Change goal position

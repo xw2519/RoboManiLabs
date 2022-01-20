@@ -38,9 +38,9 @@ ADDR_PRO_OPERATING_MODE      = 11; % Sets between Current, Velocity, Position Co
 PROTOCOL_VERSION            = 2.0;          % See which protocol version is used in the Dynamixel
 
 % Default setting
-DXL_ID                      = 13;            % Dynamixel ID: 1
+DXL_ID                      = 14;            % Dynamixel ID: 1
 BAUDRATE                    = 1000000;
-DEVICENAME                  = 'COM12';       % Check which port is being used on your controller
+DEVICENAME                  = 'COM6';       % Check which port is being used on your controller
                                             % ex) Windows: 'COM1'   Linux: '/dev/ttyUSB0' Mac: '/dev/tty.usbserial-*'
                                             
 TORQUE_ENABLE               = 1;            % Value for enabling the torque
@@ -60,7 +60,7 @@ X_AXIS_COUNTER              = 0;
 
 % Sine wave generation
 % linspace: https://uk.mathworks.com/help/matlab/ref/linspace.html
-SINE_X_AXIS                 = linspace(0,2*pi,1000);
+SINE_X_AXIS                 = linspace(0,2*pi,50);
 SINE_Y_VALUES               = sin(SINE_X_AXIS);
 SINE_Y_DYNAMIXEL_FORMAT     = (1/0.088) * sin(SINE_X_AXIS) * 90;
 
@@ -120,6 +120,10 @@ else
     fprintf('Dynamixel has been successfully connected \n');
 end
 
+h = figure;
+
+ax = gca(h);
+
 % Set servo to default position: 0deg
 write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID, ADDR_PRO_GOAL_POSITION, typecast(int32(0), 'uint32'));
 
@@ -130,6 +134,7 @@ write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID, ADDR_PRO_GOAL_POSITION, typec
 % Constantly update goal position to track sine wave
 % Loops for an entire sine wave
 for loop_counter = dxl_goal_position
+    disp(loop_counter)
     % Write goal position to new sine wave position
     write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID, ADDR_PRO_GOAL_POSITION, typecast(int32(loop_counter), 'uint32'));
     if getLastTxRxResult(port_num, PROTOCOL_VERSION) ~= COMM_SUCCESS
@@ -138,6 +143,8 @@ for loop_counter = dxl_goal_position
         printRxPacketError(PROTOCOL_VERSION, getLastRxPacketError(port_num, PROTOCOL_VERSION));
     end
     
+    X_AXIS_COUNTER = X_AXIS_COUNTER + 1;
+     
     % Read present position until the servo reaches the desired position
     while 1
         dxl_present_position = read4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID, ADDR_PRO_PRESENT_POSITION);
@@ -149,16 +156,17 @@ for loop_counter = dxl_goal_position
         
         % Plot the data on the graph
         current_plot = [X_AXIS_COUNTER, dxl_present_position];
+        disp(current_plot)
         CURRENT_PLOT = cat(1, CURRENT_PLOT, current_plot); % Concatenate the array
 
         % get min and max values of points so far
-        minVals = min(XY, [], 1);
-        maxVals = max(XY, [], 1);
+        minVals = min(CURRENT_PLOT, [], 1);
+        maxVals = max(CURRENT_PLOT, [], 1);
 
         % plot the data point
-        scatter(xy(1), xy(2), 'b*');
+        scatter(current_plot(1), current_plot(2), 'b*');
 
-        if size(XY) ~= 1
+        if size(CURRENT_PLOT) ~= 1
             line([current_plot(1), CURRENT_PLOT(end-1, 1)], [current_plot(2), CURRENT_PLOT(end-1, 2)], 'Color', 'b');
         end
 
@@ -177,8 +185,6 @@ for loop_counter = dxl_goal_position
         if ~(abs(dxl_goal_position(index) - typecast(uint32(dxl_present_position), 'int32')) > DXL_MOVING_STATUS_THRESHOLD)
             break;
         end
-        
-        X_AXIS_COUNTER = X_AXIS_COUNTER + 1;
     end
 end
 

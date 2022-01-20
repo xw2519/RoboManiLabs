@@ -25,13 +25,11 @@ if ~libisloaded(lib_name)
 end
 
 %% ---- Control Table Addresses ---- %%
-% Control table address is different in every Dynamixel model
 
-ADDR_PRO_TORQUE_ENABLE       = 64; % Torque Enable(64) determines Torque ON/OFF. Writing ‘1’ to Toque Enable’s address will turn on the Torque           
-ADDR_PRO_GOAL_POSITION       = 116; % Sets desired position
-ADDR_PRO_PRESENT_POSITION    = 132; % Present position of the servo
-ADDR_PRO_OPERATING_MODE      = 11; % Sets between Current, Velocity, Position Control Mode 
-
+ADDR_PRO_TORQUE_ENABLE       = 64;           % Control table address is different in Dynamixel model
+ADDR_PRO_GOAL_POSITION       = 116; 
+ADDR_PRO_PRESENT_POSITION    = 132; 
+ADDR_PRO_OPERATING_MODE      = 11;
 
 %% ---- Other Settings ---- %%
 
@@ -67,11 +65,7 @@ packetHandler();
 
 index = 1;
 dxl_comm_result = COMM_TX_FAIL;           % Communication result
-
-% Goal position: Modified to go between 0deg and 180deg
-% 0.088 [deg/pulse] 	1[rev] : 0 ~ 4,095
-% Based on: https://emanual.robotis.com/docs/en/dxl/x/xm430-w350/#goal-position
-dxl_goal_position = [0 2045];         
+dxl_goal_position = [0 2095];         % 0 to 4095
 
 dxl_error = 0;                              % Dynamixel error
 dxl_present_position = 0;                   % Present position
@@ -101,8 +95,9 @@ end
 % Put actuator into Position Control Mode
 write1ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID, ADDR_PRO_OPERATING_MODE, 3);
 
-% Enable Dynamixel Torque
+% Disable Dynamixel Torque
 write1ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID, ADDR_PRO_TORQUE_ENABLE, TORQUE_ENABLE);
+%write1ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID, ADDR_PRO_TORQUE_ENABLE, 0);
 
 dxl_comm_result = getLastTxRxResult(port_num, PROTOCOL_VERSION);
 dxl_error = getLastRxPacketError(port_num, PROTOCOL_VERSION);
@@ -114,26 +109,35 @@ elseif dxl_error ~= 0
 else
     fprintf('Dynamixel has been successfully connected \n');
 end
+%%%%%%%%%%%%%%%%
+posit = 0;
+i = 0;
+    j = 0;
+    while (1)
+        j = j+1;
+        posit = (posit + 45);
+        posit = mod(posit, 360);
+        
+        % Read present position
+        dxl_present_position = read4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID, ADDR_PRO_PRESENT_POSITION);
+        dxl_comm_result = getLastTxRxResult(port_num, PROTOCOL_VERSION);
+        
+        dxl_error = getLastRxPacketError(port_num, PROTOCOL_VERSION);
+        
+        fprintf('%s\n', getTxRxResult(PROTOCOL_VERSION, dxl_comm_result));
 
-% Write goal position to 0deg
-write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID, ADDR_PRO_GOAL_POSITION, typecast(int32(dxl_goal_position(1)), 'uint32'));
-if getLastTxRxResult(port_num, PROTOCOL_VERSION) ~= COMM_SUCCESS
-    printTxRxResult(PROTOCOL_VERSION, getLastTxRxResult(port_num, PROTOCOL_VERSION));
-elseif getLastRxPacketError(port_num, PROTOCOL_VERSION) ~= 0
-    printRxPacketError(PROTOCOL_VERSION, getLastRxPacketError(port_num, PROTOCOL_VERSION));
-end
+        fprintf('[ID:%03d] Position: %03d\n', DXL_ID, typecast(uint32(dxl_present_position), 'int32'));
+        %%move position
+        
+        sin_position = (sin(posit/180 * pi) + 1) * 0.5 * 4095;
+        write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID, ADDR_PRO_GOAL_POSITION, typecast(int32(sin_position), 'uint32'));
+        pause(1)
+        
+        %%
+    end
 
-pause(2)
+%%%%%%%%%%%%%%%%
 
-% Write goal position to 180deg
-write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID, ADDR_PRO_GOAL_POSITION, typecast(int32(dxl_goal_position(2)), 'uint32'));
-if getLastTxRxResult(port_num, PROTOCOL_VERSION) ~= COMM_SUCCESS
-    printTxRxResult(PROTOCOL_VERSION, getLastTxRxResult(port_num, PROTOCOL_VERSION));
-elseif getLastRxPacketError(port_num, PROTOCOL_VERSION) ~= 0
-    printRxPacketError(PROTOCOL_VERSION, getLastRxPacketError(port_num, PROTOCOL_VERSION));
-end
-
-pause(2)
 
 % Disable Dynamixel Torque
 write1ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID, ADDR_PRO_TORQUE_ENABLE, TORQUE_DISABLE);
@@ -151,6 +155,5 @@ fprintf('Port Closed \n');
 
 % Unload Library
 unloadlibrary(lib_name);
-
 close all;
 clear all;

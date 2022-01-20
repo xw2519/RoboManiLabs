@@ -37,9 +37,9 @@ ADDR_PRO_OPERATING_MODE      = 11;
 PROTOCOL_VERSION            = 2.0;          % See which protocol version is used in the Dynamixel
 
 % Default setting
-DXL_ID                      = 13;            % Dynamixel ID: 1
+DXL_ID                      = 14;            % Dynamixel ID: 1
 BAUDRATE                    = 1000000;
-DEVICENAME                  = 'COM12';       % Check which port is being used on your controller
+DEVICENAME                  = 'COM6';       % Check which port is being used on your controller
                                             % ex) Windows: 'COM1'   Linux: '/dev/ttyUSB0' Mac: '/dev/tty.usbserial-*'
                                             
 TORQUE_ENABLE               = 1;            % Value for enabling the torque
@@ -115,7 +115,7 @@ i = 0;
 
 
     j = 0;
-    while (j<200)
+    while (j<1000)
         j = j+1;
         
         % Read present position
