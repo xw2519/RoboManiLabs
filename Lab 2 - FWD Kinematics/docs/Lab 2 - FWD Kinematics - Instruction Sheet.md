@@ -52,7 +52,24 @@ Notice:
 
 ## Task 2 – Trajectory Tracking 
 
+Consider a co-ordinated joint motion.
 
+<center>
+    Show the GTAs when you are done
+</center>
+
+**Tasks**:
+1.  Without connecting the Dynamixels, use Matlab to generate a sine wave function over a given number of time steps (for example 400 steps). 
+    - The output of a sine function will naturally oscillate between -1 and 1. Modify the function to produce an output of $\pm$ 500 encoder counts centred around 12 o'clock on the servos (encoder count 2046).  
+    - You should store your sine function as an array of values
+    -  Use of `for` loop to step through each value of the sine wave, sending it to the two Dynamixels.
+
+<par>
+
+2.  Now try and get the two actuators to follow two different trajectories. For example, a sine wave and an inverted sine wave or a sine wave and a cosine wave. 
+
+**Analysis**: 
+1.  You may notice that the motion is a bit jerky in places. Discuss with your group why you think this may be.
 ---
 
 ## Task 3 – Frame Assignment and Forward Kinematics  
