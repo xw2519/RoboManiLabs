@@ -85,7 +85,7 @@ write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID2, ADDR_MAX_POS, MAX_POS);
 write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID1, ADDR_MIN_POS, MIN_POS); 
 write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID2, ADDR_MIN_POS, MIN_POS); 
 
-%% ---- Initialize PortHandler Structs ---- %%
+%% ---- Initialize PortHandler Structs and Connect to Servo ---- %%
 % Set the port path
 % Get methods and members of PortHandlerLinux or PortHandlerWindows
 port_num = portHandler(DEVICENAME);
@@ -151,9 +151,11 @@ for i = 1:length(SINE_Y_DYNAMIXEL_FORMAT)
     elseif getLastRxPacketError(port_num, PROTOCOL_VERSION) ~= 0
         printRxPacketError(PROTOCOL_VERSION, getLastRxPacketError(port_num, PROTOCOL_VERSION));
     end
+    
+    pause(2)
 end
 
-%% ---- Disable Dynamixel Torque ---- %%
+%% ---- Disable Dynamixel Torque and Close Port ---- %%
 
 write1ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID1, ADDR_PRO_TORQUE_ENABLE, TORQUE_DISABLE);
 write1ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID2, ADDR_PRO_TORQUE_ENABLE, TORQUE_DISABLE);
