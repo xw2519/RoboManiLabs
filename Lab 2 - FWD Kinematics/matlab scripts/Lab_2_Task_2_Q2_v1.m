@@ -34,10 +34,10 @@ ADDR_PRO_OPERATING_MODE      = 11;  % Sets between Current, Velocity, Position C
 PROTOCOL_VERSION            = 2.0;          % See which protocol version is used in the Dynamixel
 
 % Default setting
-DXL_ID1                     = 14;          % Dynamixel ID: 1
+DXL_ID1                     = 12;          % Dynamixel ID: 1
 DXL_ID2                     = 14;          % Dynamixel ID: 1
-BAUDRATE                    = 1000000;
-DEVICENAME                  = 'COM6';       % Check which port is being used on your controller
+BAUDRATE                    = 115200;
+DEVICENAME                  = 'COM5';       % Check which port is being used on your controller
                                             % ex) Windows: 'COM1'   Linux: '/dev/ttyUSB0' Mac: '/dev/tty.usbserial-*'
                                             
 TORQUE_ENABLE               = 1;            % Value for enabling the torque
@@ -56,7 +56,7 @@ COMM_TX_FAIL                = -1001;        % Communication Tx Failed
 % Sine wave generation
 SINE_X_AXIS                 = linspace(0, 2*pi, 500); % Divide 2pi x-axis into steps
 SINE_Y_VALUES               = sin(SINE_X_AXIS);
-SINE_Y_DYNAMIXEL_FORMAT     = 2046 + 20*sin(SINE_X_AXIS); % Caliberate to center around 12 o'clock (encoder count 2046)
+SINE_Y_DYNAMIXEL_FORMAT     = 2046 + 1354*sin(SINE_X_AXIS); % Caliberate to center around 12 o'clock (encoder count 2046)
 
 % scatter(SINE_X_AXIS, SINE_Y_DYNAMIXEL_FORMAT)
 
@@ -64,26 +64,10 @@ SINE_Y_DYNAMIXEL_FORMAT     = 2046 + 20*sin(SINE_X_AXIS); % Caliberate to center
 
 % Cosine wave generation
 COSINE_X_AXIS                 = linspace(0, 2*pi, 500); % Divide 2pi x-axis into steps
-COSINE_Y_VALUES               = sin(COSINE_X_AXIS);
-COSINE_Y_DYNAMIXEL_FORMAT     = 2046 + 20*cos(COSINE_X_AXIS); % Caliberate to center around 12 o'clock (encoder count 2046)
+COSINE_Y_VALUES               = cos(COSINE_X_AXIS);
+COSINE_Y_DYNAMIXEL_FORMAT     = 2046 + 1354*cos(COSINE_X_AXIS); % Caliberate to center around 12 o'clock (encoder count 2046)
 
 % scatter(COSINE_X_AXIS, COSINE_Y_DYNAMIXEL_FORMAT)
-
-%% ---- Limit the motion range of the servos ---- %%
-
-ADDR_MAX_POS = 48; 
-ADDR_MIN_POS = 52; 
-  
-MAX_POS = 3400; 
-MIN_POS = 600; 
-  
-% Set max position limit 
-write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID1, ADDR_MAX_POS, MAX_POS); 
-write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID2, ADDR_MAX_POS, MAX_POS); 
-  
-% Set min position limit 
-write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID1, ADDR_MIN_POS, MIN_POS); 
-write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID2, ADDR_MIN_POS, MIN_POS); 
 
 %% ---- Initialize PortHandler Structs and Connect to Servo ---- %%
 % Set the port path
@@ -138,21 +122,37 @@ else
     fprintf('Dynamixel has been successfully connected \n');
 end
 
+%% ---- Limit the motion range of the servos ---- %%
+
+ADDR_MAX_POS = 48; 
+ADDR_MIN_POS = 52; 
+  
+MAX_POS = 3400; 
+MIN_POS = 600; 
+  
+% Set max position limit 
+write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID1, ADDR_MAX_POS, MAX_POS); 
+write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID2, ADDR_MAX_POS, MAX_POS); 
+  
+% Set min position limit 
+write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID1, ADDR_MIN_POS, MIN_POS); 
+write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID2, ADDR_MIN_POS, MIN_POS); 
+
 %% ---- Servo motions ---- %%
 
 assert(length(SINE_Y_DYNAMIXEL_FORMAT) == length(COSINE_Y_DYNAMIXEL_FORMAT)) % Ensure length of two arrays are the same
 
-for i = 1:length(SINE_Y_DYNAMIXEL_FORMAT)
-    write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID1, ADDR_PRO_GOAL_POSITION, SINE_Y_DYNAMIXEL_FORMAT(i));
-    write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID2, ADDR_PRO_GOAL_POSITION, COSINE_Y_DYNAMIXEL_FORMAT(i));
-    
-    if getLastTxRxResult(port_num, PROTOCOL_VERSION) ~= COMM_SUCCESS
-        printTxRxResult(PROTOCOL_VERSION, getLastTxRxResult(port_num, PROTOCOL_VERSION));
-    elseif getLastRxPacketError(port_num, PROTOCOL_VERSION) ~= 0
-        printRxPacketError(PROTOCOL_VERSION, getLastRxPacketError(port_num, PROTOCOL_VERSION));
+for j = 1:10
+    for i = 1:length(SINE_Y_DYNAMIXEL_FORMAT)
+        write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID1, ADDR_PRO_GOAL_POSITION, SINE_Y_DYNAMIXEL_FORMAT(i));
+        write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID2, ADDR_PRO_GOAL_POSITION, COSINE_Y_DYNAMIXEL_FORMAT(i));
+
+        if getLastTxRxResult(port_num, PROTOCOL_VERSION) ~= COMM_SUCCESS
+            printTxRxResult(PROTOCOL_VERSION, getLastTxRxResult(port_num, PROTOCOL_VERSION));
+        elseif getLastRxPacketError(port_num, PROTOCOL_VERSION) ~= 0
+            printRxPacketError(PROTOCOL_VERSION, getLastRxPacketError(port_num, PROTOCOL_VERSION));
+        end
     end
-    
-    pause(2)
 end
 
 %% ---- Disable Dynamixel Torque and Close Port ---- %%

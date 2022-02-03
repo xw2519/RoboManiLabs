@@ -35,10 +35,10 @@ ADDR_PRO_OPERATING_MODE      = 11;
 PROTOCOL_VERSION            = 2.0;          % See which protocol version is used in the Dynamixel
 
 % Default setting
-DXL_ID1                     = 14;          % Dynamixel ID: 1
+DXL_ID1                     = 12;          % Dynamixel ID: 1
 DXL_ID2                     = 14;          % Dynamixel ID: 1
-BAUDRATE                    = 1000000;
-DEVICENAME                  = 'COM6';       % Check which port is being used on your controller
+BAUDRATE                    = 115200;
+DEVICENAME                  = 'COM5';       % Check which port is being used on your controller
                                             % ex) Windows: 'COM1'   Linux: '/dev/ttyUSB0' Mac: '/dev/tty.usbserial-*'
                                             
 TORQUE_ENABLE               = 1;            % Value for enabling the torque
@@ -143,13 +143,9 @@ end
 %% ---- Track Servo Position and Convert Into Angles and Radians ---- %%
 % Loop until 'e' is pressed to exit loop
 while 1
-    if input("Input 'e' to quit!") == ESC_CHARACTER
-        break;
-    end
-    
     % Read present servo position
     dxl_ID1_present_position = read4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID1, ADDR_PRO_PRESENT_POSITION);
-    dxl_ID2_present_position = read4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID1, ADDR_PRO_PRESENT_POSITION);
+    dxl_ID2_present_position = read4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID2, ADDR_PRO_PRESENT_POSITION);
     
     dxl_comm_result = getLastTxRxResult(port_num, PROTOCOL_VERSION);
     dxl_error = getLastRxPacketError(port_num, PROTOCOL_VERSION);
@@ -163,16 +159,15 @@ while 1
     % Convert to angles in degrees and radians
     % 0.088 [°] <------> 0 ~ 4,095(1 rotation)
     % Round to nearest integer
-    dxl_ID1_angle_degree = round(0.088 * typecast(uint32(dxl_ID1_present_position), 'int32'));
-    dxl_ID2_angle_degree = round(0.088 * typecast(uint32(dxl_ID2_present_position), 'int32'));
-    
+    dxl_ID1_angle_degree = (0.088 * typecast(single(dxl_ID1_present_position), 'single'));
+    dxl_ID2_angle_degree = (0.088 * typecast(single(dxl_ID2_present_position), 'single'));
     dxl_ID1_angle_radian = deg2rad(dxl_ID1_angle_degree);
     dxl_ID2_angle_radian = deg2rad(dxl_ID2_angle_degree);
     
     % Print out readings and conversions
-    fprintf('[ID:%03d] Position: %03d - [ID:%03d] Position: %03d', DXL_ID1, typecast(uint32(dxl_ID1_present_position), 'int32'), DXL_ID2, typecast(uint32(dxl_ID2_present_position), 'int32'));
-    fprintf('[ID:%03d] Angle (Deg): %03d - [ID:%03d] Angle (Deg): %03d', DXL_ID1, dxl_ID1_angle_degree, DXL_ID2, dxl_ID2_angle_degree);
-    fprintf('[ID:%03d] Angle (Rad): %03d - [ID:%03d] Angle (Rad): %03d', DXL_ID1, dxl_ID1_angle_radian, DXL_ID2, dxl_ID2_angle_radian);
+    fprintf('[ID:%03d] Position: %.1f - [ID:%03d] Position: %.1f\n', DXL_ID1, typecast(uint32(dxl_ID1_present_position), 'int32'), DXL_ID2, typecast(uint32(dxl_ID2_present_position), 'int32'));
+    fprintf('[ID:%03d] Angle (Deg): %.4f - [ID:%03d] Angle (Deg): %.4f\n', DXL_ID1, dxl_ID1_angle_degree, DXL_ID2, dxl_ID2_angle_degree);
+    fprintf('[ID:%03d] Angle (Rad): %.4f - [ID:%03d] Angle (Rad): %.4f\n', DXL_ID1, dxl_ID1_angle_radian, DXL_ID2, dxl_ID2_angle_radian);
 end
 
 %% ---- Disable Dynamixel Torque and Close Port ---- %%

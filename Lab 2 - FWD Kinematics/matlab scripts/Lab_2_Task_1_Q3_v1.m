@@ -34,10 +34,10 @@ ADDR_PRO_OPERATING_MODE      = 11;  % Sets between Current, Velocity, Position C
 PROTOCOL_VERSION            = 2.0;          % See which protocol version is used in the Dynamixel
 
 % Default setting
-DXL_ID1                     = 14;          % Dynamixel ID: 1
+DXL_ID1                     = 12;          % Dynamixel ID: 1
 DXL_ID2                     = 14;          % Dynamixel ID: 1
-BAUDRATE                    = 1000000;
-DEVICENAME                  = 'COM6';       % Check which port is being used on your controller
+BAUDRATE                    = 115200;
+DEVICENAME                  = 'COM5';       % Check which port is being used on your controller
                                             % ex) Windows: 'COM1'   Linux: '/dev/ttyUSB0' Mac: '/dev/tty.usbserial-*'
                                             
 TORQUE_ENABLE               = 1;            % Value for enabling the torque
@@ -137,22 +137,13 @@ end
 % Write goal position 1
 write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID1, ADDR_PRO_GOAL_POSITION, typecast(int32(dxl_goal_position(1)), 'uint32'));
 write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID2, ADDR_PRO_GOAL_POSITION, typecast(int32(dxl_goal_position(1)), 'uint32'));
-if getLastTxRxResult(port_num, PROTOCOL_VERSION) ~= COMM_SUCCESS
-    printTxRxResult(PROTOCOL_VERSION, getLastTxRxResult(port_num, PROTOCOL_VERSION));
-elseif getLastRxPacketError(port_num, PROTOCOL_VERSION) ~= 0
-    printRxPacketError(PROTOCOL_VERSION, getLastRxPacketError(port_num, PROTOCOL_VERSION));
-end
+
 
 pause(2)
 
 % Write goal position 2
 write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID1, ADDR_PRO_GOAL_POSITION, typecast(int32(dxl_goal_position(2)), 'uint32'));
 write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID2, ADDR_PRO_GOAL_POSITION, typecast(int32(dxl_goal_position(2)), 'uint32'));
-if getLastTxRxResult(port_num, PROTOCOL_VERSION) ~= COMM_SUCCESS
-    printTxRxResult(PROTOCOL_VERSION, getLastTxRxResult(port_num, PROTOCOL_VERSION));
-elseif getLastRxPacketError(port_num, PROTOCOL_VERSION) ~= 0
-    printRxPacketError(PROTOCOL_VERSION, getLastRxPacketError(port_num, PROTOCOL_VERSION));
-end
 
 pause(2)
 
