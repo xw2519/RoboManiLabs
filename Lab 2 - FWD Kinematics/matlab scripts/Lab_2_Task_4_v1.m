@@ -40,6 +40,7 @@ BAUDRATE                    = 115200;
 DEVICENAME                  = 'COM3';       % Check which port is being used on your controller
                                             % ex) Windows: 'COM1'   Linux: '/dev/ttyUSB0' Mac: '/dev/tty.usbserial-*'
                                             
+                                            
 TORQUE_ENABLE               = 1;            % Value for enabling the torque
 TORQUE_DISABLE              = 0;            % Value for disabling the torque
 DXL_MINIMUM_POSITION_VALUE  = -150000;      % Dynamixel will rotate between this value
@@ -98,7 +99,7 @@ end
 ADDR_MAX_POS = 48; 
 ADDR_MIN_POS = 52; 
   
-MAX_POS = 3400; 
+MAX_POS = 3500; 
 MIN_POS = 600; 
   
 % Set max position limit 
@@ -120,7 +121,8 @@ write1ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID1, ADDR_PRO_TORQUE_ENABLE, TORQ
 write1ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID2, ADDR_PRO_TORQUE_ENABLE, TORQUE_ENABLE);
 
 % Goal position
-dxl_goal_position = [600, 2000 ,3400];        
+dxl_1_goal_position = [3412, 2297 ,2338, 3433, 3412];   
+dxl_2_goal_position = [1140, 1731, 2045, 1774, 1140];         
 
 dxl_comm_result = getLastTxRxResult(port_num, PROTOCOL_VERSION);
 dxl_error = getLastRxPacketError(port_num, PROTOCOL_VERSION);
@@ -135,21 +137,52 @@ end
 
 % Sending a sequence of three position demands to both Dynamixels simultaneously 
 % Write goal position 1
-write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID1, ADDR_PRO_GOAL_POSITION, typecast(int32(dxl_goal_position(1)), 'uint32'));
-write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID2, ADDR_PRO_GOAL_POSITION, typecast(int32(dxl_goal_position(1)), 'uint32'));
-
+write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID1, ADDR_PRO_GOAL_POSITION, typecast(int32(dxl_1_goal_position(1)), 'uint32'));
+write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID2, ADDR_PRO_GOAL_POSITION, typecast(int32(dxl_2_goal_position(1)), 'uint32'));
+if getLastTxRxResult(port_num, PROTOCOL_VERSION) ~= COMM_SUCCESS
+    printTxRxResult(PROTOCOL_VERSION, getLastTxRxResult(port_num, PROTOCOL_VERSION));
+elseif getLastRxPacketError(port_num, PROTOCOL_VERSION) ~= 0
+    printRxPacketError(PROTOCOL_VERSION, getLastRxPacketError(port_num, PROTOCOL_VERSION));
+end
 
 pause(2)
 
 % Write goal position 2
-write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID1, ADDR_PRO_GOAL_POSITION, typecast(int32(dxl_goal_position(2)), 'uint32'));
-write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID2, ADDR_PRO_GOAL_POSITION, typecast(int32(dxl_goal_position(2)), 'uint32'));
+write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID1, ADDR_PRO_GOAL_POSITION, typecast(int32(dxl_1_goal_position(2)), 'uint32'));
+write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID2, ADDR_PRO_GOAL_POSITION, typecast(int32(dxl_2_goal_position(2)), 'uint32'));
+if getLastTxRxResult(port_num, PROTOCOL_VERSION) ~= COMM_SUCCESS
+    printTxRxResult(PROTOCOL_VERSION, getLastTxRxResult(port_num, PROTOCOL_VERSION));
+elseif getLastRxPacketError(port_num, PROTOCOL_VERSION) ~= 0
+    printRxPacketError(PROTOCOL_VERSION, getLastRxPacketError(port_num, PROTOCOL_VERSION));
+end
 
 pause(2)
 
 % Write goal position 3
-write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID1, ADDR_PRO_GOAL_POSITION, typecast(int32(dxl_goal_position(3)), 'uint32'));
-write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID2, ADDR_PRO_GOAL_POSITION, typecast(int32(dxl_goal_position(3)), 'uint32'));
+write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID1, ADDR_PRO_GOAL_POSITION, typecast(int32(dxl_1_goal_position(3)), 'uint32'));
+write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID2, ADDR_PRO_GOAL_POSITION, typecast(int32(dxl_2_goal_position(3)), 'uint32'));
+if getLastTxRxResult(port_num, PROTOCOL_VERSION) ~= COMM_SUCCESS
+    printTxRxResult(PROTOCOL_VERSION, getLastTxRxResult(port_num, PROTOCOL_VERSION));
+elseif getLastRxPacketError(port_num, PROTOCOL_VERSION) ~= 0
+    printRxPacketError(PROTOCOL_VERSION, getLastRxPacketError(port_num, PROTOCOL_VERSION));
+end
+
+pause(2)
+
+% Write goal position 3
+write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID1, ADDR_PRO_GOAL_POSITION, typecast(int32(dxl_1_goal_position(4)), 'uint32'));
+write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID2, ADDR_PRO_GOAL_POSITION, typecast(int32(dxl_2_goal_position(4)), 'uint32'));
+if getLastTxRxResult(port_num, PROTOCOL_VERSION) ~= COMM_SUCCESS
+    printTxRxResult(PROTOCOL_VERSION, getLastTxRxResult(port_num, PROTOCOL_VERSION));
+elseif getLastRxPacketError(port_num, PROTOCOL_VERSION) ~= 0
+    printRxPacketError(PROTOCOL_VERSION, getLastRxPacketError(port_num, PROTOCOL_VERSION));
+end
+
+pause(2)
+
+% Write goal position 3
+write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID1, ADDR_PRO_GOAL_POSITION, typecast(int32(dxl_1_goal_position(5)), 'uint32'));
+write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID2, ADDR_PRO_GOAL_POSITION, typecast(int32(dxl_2_goal_position(5)), 'uint32'));
 if getLastTxRxResult(port_num, PROTOCOL_VERSION) ~= COMM_SUCCESS
     printTxRxResult(PROTOCOL_VERSION, getLastTxRxResult(port_num, PROTOCOL_VERSION));
 elseif getLastRxPacketError(port_num, PROTOCOL_VERSION) ~= 0

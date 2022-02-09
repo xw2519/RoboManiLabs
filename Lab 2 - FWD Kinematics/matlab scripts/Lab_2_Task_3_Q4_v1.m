@@ -47,10 +47,10 @@ T_0 = R_0 * P_0;
 PROTOCOL_VERSION            = 2.0;          % See which protocol version is used in the Dynamixel
 
 % Default setting
-DXL_ID1                     = 12;          % Dynamixel ID: 1
-DXL_ID2                     = 14;          % Dynamixel ID: 1
+DXL_ID1                     = 11;          % Dynamixel ID: 1
+DXL_ID2                     = 12;          % Dynamixel ID: 1
 BAUDRATE                    = 115200;
-DEVICENAME                  = 'COM5';       % Check which port is being used on your controller
+DEVICENAME                  = 'COM3';       % Check which port is being used on your controller
                                             % ex) Windows: 'COM1'   Linux: '/dev/ttyUSB0' Mac: '/dev/tty.usbserial-*'
                                             
 TORQUE_ENABLE               = 1;            % Value for enabling the torque
@@ -99,14 +99,6 @@ else
     return;
 end
 
-% Put actuator into Position Control Mode
-write1ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID1, ADDR_PRO_OPERATING_MODE, 3);
-write1ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID2, ADDR_PRO_OPERATING_MODE, 3);
-
-% Enable Dynamixel Torque for two servos
-write1ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID1, ADDR_PRO_TORQUE_ENABLE, TORQUE_ENABLE);
-write1ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID2, ADDR_PRO_TORQUE_ENABLE, TORQUE_ENABLE);    
-
 dxl_comm_result = getLastTxRxResult(port_num, PROTOCOL_VERSION);
 dxl_error = getLastRxPacketError(port_num, PROTOCOL_VERSION);
 
@@ -118,10 +110,38 @@ else
     fprintf('Dynamixel has been successfully connected \n');
 end
 
+%% ----- SET MOTION LIMITS ----------- %%
+  
+ADDR_MAX_POS = 48; 
+ADDR_MIN_POS = 52; 
+  
+MAX_POS = 3400; 
+MIN_POS = 600; 
+  
+% Set max position limit 
+write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID1, ADDR_MAX_POS, MAX_POS); 
+write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID2, ADDR_MAX_POS, MAX_POS); 
+  
+% Set min position limit 
+write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID1, ADDR_MIN_POS, MIN_POS); 
+write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID2, ADDR_MIN_POS, MIN_POS); 
+
 %% ---- Set initial state of servo to default (0) position ---- %%
 
-write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID1, ADDR_PRO_GOAL_POSITION, 2046);
-write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID2, ADDR_PRO_GOAL_POSITION, 2046);
+% Put actuator into Position Control Mode
+write1ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID2, ADDR_PRO_OPERATING_MODE, 3);
+write1ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID1, ADDR_PRO_OPERATING_MODE, 3);
+
+
+% Enable Dynamixel Torque for two servos
+write1ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID1, ADDR_PRO_TORQUE_ENABLE, TORQUE_ENABLE);
+write1ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID2, ADDR_PRO_TORQUE_ENABLE, TORQUE_ENABLE);    
+
+
+
+
+write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID1, ADDR_PRO_GOAL_POSITION, 3416.0);
+write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID2, ADDR_PRO_GOAL_POSITION, 1132.0);
 
 if getLastTxRxResult(port_num, PROTOCOL_VERSION) ~= COMM_SUCCESS
     printTxRxResult(PROTOCOL_VERSION, getLastTxRxResult(port_num, PROTOCOL_VERSION));

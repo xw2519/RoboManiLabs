@@ -47,10 +47,10 @@ T_0 = R_0 * P_0;
 PROTOCOL_VERSION            = 2.0;          % See which protocol version is used in the Dynamixel
 
 % Default setting
-DXL_ID1                     = 12;          % Dynamixel ID: 1
-DXL_ID2                     = 14;          % Dynamixel ID: 1
+DXL_ID1                     = 11;          
+DXL_ID2                     = 12;          
 BAUDRATE                    = 115200;
-DEVICENAME                  = 'COM5';       % Check which port is being used on your controller
+DEVICENAME                  = 'COM3';       % Check which port is being used on your controller
                                             % ex) Windows: 'COM1'   Linux: '/dev/ttyUSB0' Mac: '/dev/tty.usbserial-*'
                                             
 TORQUE_ENABLE               = 1;            % Value for enabling the torque
@@ -67,7 +67,8 @@ COMM_TX_FAIL                = -1001;        % Communication Tx Failed
 %% ---- Animated Plot Settings ---- %%
 
 ANIMATED_PLOT_HANDLER = animatedline;
-axis([0,16, 0, 16]) % Axis definition of the graph (Needs to be caliberated)
+axis([-140, 140, 0, 140]) % Axis definition of the graph (Needs to be caliberated)
+title("Team - Machina")
 
 %% ---- Initialize PortHandler Structs and Connect to Servo ---- %%
 % Set the port path
@@ -123,19 +124,6 @@ else
     fprintf('Dynamixel has been successfully connected \n');
 end
 
-%% ---- Set initial state of servo to default (0) position ---- %%
-
-write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID1, ADDR_PRO_GOAL_POSITION, 2046);
-write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID2, ADDR_PRO_GOAL_POSITION, 2046);
-
-if getLastTxRxResult(port_num, PROTOCOL_VERSION) ~= COMM_SUCCESS
-    printTxRxResult(PROTOCOL_VERSION, getLastTxRxResult(port_num, PROTOCOL_VERSION));
-elseif getLastRxPacketError(port_num, PROTOCOL_VERSION) ~= 0
-    printRxPacketError(PROTOCOL_VERSION, getLastRxPacketError(port_num, PROTOCOL_VERSION));
-end
-
-pause(2)
-
 %% ---- Switch Servo Torque Off to Allow Manual Tracking---- %%
 
 % Put actuator into Position Control Mode
@@ -176,6 +164,9 @@ while 1
     % Convert to angles in degrees and radians
     % 0.088 [°] <------> 0 ~ 4,095(1 rotation)
     % Round to nearest integer
+    dxl_ID1_angle_degree = (0.088 * typecast(single(dxl_ID1_present_position), 'single'));
+    dxl_ID2_angle_degree = (0.088 * typecast(single(dxl_ID2_present_position), 'single'));
+    
     dxl_ID1_angle_degree_caliberated = dxl_ID1_angle_degree - 180;
     dxl_ID2_angle_degree_caliberated = dxl_ID2_angle_degree - 180;
     dxl_ID1_angle_radian_caliberated = deg2rad(dxl_ID1_angle_degree_caliberated);
@@ -240,10 +231,9 @@ while 1
     disp(BaseToTool)
     
     % Plot new X and Y location to animated graph
-    addpoints(ANIMATED_PLOT_HANDLER, BaseToTool(1,3), BaseToTool(2,3));
+    addpoints(ANIMATED_PLOT_HANDLER, double(BaseToTool(1,3)), double(BaseToTool(2,3)));
     drawnow
 end
-
 
 %% ---- Disable Dynamixel Torque and Close Port ---- %%
 write1ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID, ADDR_PRO_TORQUE_ENABLE, TORQUE_DISABLE);
