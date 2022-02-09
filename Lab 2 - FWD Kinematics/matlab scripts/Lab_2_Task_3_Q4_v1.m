@@ -29,6 +29,18 @@ ADDR_PRO_GOAL_POSITION       = 116;
 ADDR_PRO_PRESENT_POSITION    = 132; 
 ADDR_PRO_OPERATING_MODE      = 11;
 
+%% ---- Transformation Matrices ---- %%
+
+R_0 = [ 1 0 0; 
+        0 1 0;
+        0 0 1 ];
+   
+P_0 = [ 1 0 0; 
+        0 1 0;
+        0 0 1 ];
+   
+T_0 = R_0 * P_0;
+
 %% ---- Other Settings ---- %%
 
 % Protocol version
@@ -161,12 +173,69 @@ while 1
     % Round to nearest integer
     dxl_ID1_angle_degree = (0.088 * typecast(single(dxl_ID1_present_position), 'single'));
     dxl_ID2_angle_degree = (0.088 * typecast(single(dxl_ID2_present_position), 'single'));
-    dxl_ID1_angle_radian = deg2rad(dxl_ID1_angle_degree);
-    dxl_ID2_angle_radian = deg2rad(dxl_ID2_angle_degree);
+    
+    dxl_ID1_angle_degree_caliberated = dxl_ID1_angle_degree - 180;
+    dxl_ID2_angle_degree_caliberated = dxl_ID2_angle_degree - 180;
+    dxl_ID1_angle_radian_caliberated = deg2rad(dxl_ID1_angle_degree_caliberated);
+    dxl_ID2_angle_radian_caliberated = deg2rad(dxl_ID2_angle_degree_caliberated);
     
     % Print out readings and conversions
-    fprintf('[ID:%03d] Position: %.1f - Angle(Deg): %.4f - Angle(Rad): %.4f\n', DXL_ID1, typecast(uint32(dxl_ID1_present_position), 'int32'), dxl_ID1_angle_degree, dxl_ID1_angle_radian);
-    fprintf('[ID:%03d] Position: %.1f - Angle(Deg): %.4f - Angle(Rad): %.4f\n', DXL_ID2, typecast(uint32(dxl_ID2_present_position), 'int32'), dxl_ID2_angle_degree, dxl_ID2_angle_radian);
+    fprintf('[ID:%03d] Position: %.1f - Angle(Deg): %.4f - Angle(Rad): %.4f\n', DXL_ID1, typecast(uint32(dxl_ID1_present_position), 'int32'), dxl_ID1_angle_degree_caliberated, dxl_ID1_angle_radian_caliberated);
+    fprintf('[ID:%03d] Position: %.1f - Angle(Deg): %.4f - Angle(Rad): %.4f\n', DXL_ID2, typecast(uint32(dxl_ID2_present_position), 'int32'), dxl_ID2_angle_degree_caliberated, dxl_ID2_angle_radian_caliberated);
+    
+    % Calculate the transformation matrices 
+    % Frame 1 - Rotation
+    R_0_1 = [ cosd(dxl_ID2_angle_degree_caliberated) -sind(dxl_ID2_angle_degree_caliberated) 0;
+              sind(dxl_ID2_angle_degree_caliberated)  cosd(dxl_ID2_angle_degree_caliberated) 0;
+                                0                                       0                    1; ];
+   
+    P_0_1 = [ 1 0 0; 
+              0 1 0;
+              0 0 1 ];
+
+    T_0_1 = R_0_1 * P_0_1;
+    
+    % Frame 2 - Translation
+    R_1_2 = [ 1 0 0; 
+              0 1 0;
+              0 0 1 ];
+   
+    P_1_2 = [ 1 0  0; 
+              0 1 80; 
+              0 0  1  ];
+
+    T_1_2 = R_1_2 * P_1_2;
+    
+    % Frame 3 - Rotation
+    R_2_3 = [ cosd(dxl_ID1_angle_degree_caliberated) -sind(dxl_ID1_angle_degree_caliberated) 0; 
+              sind(dxl_ID1_angle_degree_caliberated)  cosd(dxl_ID1_angle_degree_caliberated) 0;
+                                0                                       0                    1; ];
+
+    P_2_3 = [ 1 0 0; 
+              0 1 0;
+              0 0 1 ];
+
+    T_2_3 = R_2_3 * P_2_3;
+    
+    % Frame 4 - Translation
+    R_3_4 = [ 1 0 0; 
+              0 1 0;
+              0 0 1 ];
+
+    P_3_4 = [ 1 0  0; 
+              0 1 60; 
+              0 0  1 ];
+
+    T_3_4 = R_3_4 * P_3_4;
+    
+    BaseToShoulderDistal = T_0_1 * T_1_2;
+    BaseToTool = T_0_1 * T_1_2 * T_2_3 * T_3_4;
+    
+    disp('BaseToShoulderDistal matrix:')
+    disp(BaseToShoulderDistal)
+    
+    disp('BaseToTool matrix:')
+    disp(BaseToTool)
 end
 
 %% ---- Disable Dynamixel Torque and Close Port ---- %%
